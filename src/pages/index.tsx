@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import clsx from "clsx";
+import Image from "next/image";
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -54,7 +55,8 @@ export default function Home() {
         <title>YT-GPT</title>
       </Head>
 
-      <h1 className="font-bold text-3xl">📽️ YT-GPT</h1>
+      <Image src="/logo.png" alt="YT-GPT" height={120} width={120} />
+
       <form
         className="mt-8"
         onSubmit={(e) => {
@@ -73,11 +75,12 @@ export default function Home() {
           </label>
           <div className="input-group">
             <input
-              type="text"
+              type="url"
               className="input input-bordered"
               placeholder="https://www.youtube.com/"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              required
             />
             <button
               type="submit"
