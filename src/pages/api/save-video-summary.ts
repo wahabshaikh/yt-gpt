@@ -4,6 +4,7 @@ import { OpenAI } from "langchain/llms/openai";
 import { loadSummarizationChain } from "langchain/chains";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { supabaseClient } from "~/lib/supabase";
+import { convertToText } from "~/utils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,9 +26,7 @@ export default async function handler(
 
     if (!data) throw new Error("No data found");
 
-    const text = data.transcript
-      .map((t: { text: string; offset: number; duration: number }) => t.text)
-      .join(" ");
+    const text = convertToText(data.transcript);
 
     const model = new OpenAI({ temperature: 0 });
     const textSplitter = new RecursiveCharacterTextSplitter({
@@ -50,9 +49,9 @@ export default async function handler(
 
     if (updateError) throw updateError;
 
-    res.status(200).json({ summary });
+    res.status(200).end();
   } catch (error) {
     console.error(error);
-    res.status(400).json({});
+    res.status(400).end();
   }
 }

@@ -1,48 +1,80 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import clsx from "clsx";
 import Image from "next/image";
+import Link from "next/link";
+import { supabaseClient } from "~/lib/supabase";
+import { useRouter } from "next/router";
+import getYouTubeID from "get-youtube-id";
 
 export default function Home() {
+  const router = useRouter();
+
   const [url, setUrl] = useState("");
-  const [summary, setSummary] = useState("");
+  const [recentVideos, setRecentVideos] = useState<
+    { video_id: string; title: string; thumbnail: string; url: string }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchResult = async (url: string) => {
-    setSummary("");
+  useEffect(() => {
+    fetchRecentVideos();
+  }, []);
+
+  const fetchRecentVideos = async () => {
+    const { data, error } = await supabaseClient
+      .from("videos")
+      .select("video_id, title, thumbnail, url")
+      .limit(5);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    if (!data || !data.length) {
+      toast.error(`No videos found!`);
+      return;
+    }
+
+    setRecentVideos(data);
+  };
+
+  const saveVideo = async (url: string) => {
     setIsLoading(true);
 
     try {
-      const saveVideoDetailsResponse = await fetch("/api/save-video-details", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      if (!saveVideoDetailsResponse.ok) {
-        toast.error("Something went wrong while saving video details!");
-        throw new Error(saveVideoDetailsResponse.statusText);
-      }
+      await toast.promise(
+        fetch("/api/save-video-details", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        }),
+        {
+          loading: "Fetching video details...",
+          success: "Fetched video details successfully!",
+          error: "Something went wrong while fetching video details!",
+        }
+      );
 
-      const saveVideoSummaryResponse = await fetch("/api/save-video-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      if (!saveVideoSummaryResponse.ok) {
-        toast.error("Something went wrong while saving video summary!");
-        throw new Error(saveVideoSummaryResponse.statusText);
-      }
+      await toast.promise(
+        fetch("/api/save-video-summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        }),
+        {
+          loading: "Fetching video summary...",
+          success: "Fetched video summary successfully!",
+          error: "Something went wrong while fetching video summary!",
+        }
+      );
 
-      const data = await saveVideoSummaryResponse.json();
+      const videoId = getYouTubeID(url, { fuzzy: false });
 
-      // if (!data) {
-      //   toast.error("No data in response!");
-      //   throw new Error("No data in response!");
-      // }
-
-      setSummary(data.summary);
+      router.push(`/videos/${videoId}`);
     } catch (error) {
+      toast.error("Something went wrong!");
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -55,15 +87,17 @@ export default function Home() {
         <title>YT-GPT</title>
       </Head>
 
-      <Image src="/logo.png" alt="YT-GPT" height={120} width={120} />
+      <Link href="/">
+        <Image src="/logo.png" alt="YT-GPT" height={120} width={120} />
+      </Link>
 
       <form
-        className="mt-8"
+        className="mt-8 max-w-3xl w-full"
         onSubmit={(e) => {
           e.preventDefault();
 
           if (url) {
-            fetchResult(url);
+            saveVideo(url);
           } else {
             toast.error("Please provide a url!");
           }
@@ -71,13 +105,13 @@ export default function Home() {
       >
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Enter the YouTube video link</span>
+            <span className="label-text">Enter the YouTube Video URL</span>
           </label>
           <div className="input-group">
             <input
               type="url"
-              className="input input-bordered"
-              placeholder="https://www.youtube.com/"
+              className="input input-bordered w-full"
+              placeholder="https://www.youtube.com/watch?v="
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
@@ -105,14 +139,32 @@ export default function Home() {
           </div>
         </div>
       </form>
-      <div className="mt-8">
-        {summary && (
-          <>
-            <h2 className="text-xl font-bold">Summary</h2>
-            <p className="mt-4">{summary}</p>
-          </>
-        )}
-      </div>
+
+      <section className="mt-8">
+        <h2 className="text-3xl font-bold">Recent Videos</h2>
+        <ul className="mt-8 space-y-4">
+          {recentVideos.map((video) => (
+            <li key={video.video_id}>
+              <Link href={`/videos/${video.video_id}`}>
+                <div className="flex gap-4 items-center">
+                  <Image
+                    src={video.thumbnail}
+                    alt={video.title}
+                    height={120}
+                    width={120}
+                  />
+                  <div>
+                    <h3 className="font-bold">{video.title}</h3>
+                    <a href={video.url} target="_blank" className="link">
+                      Watch Video
+                    </a>
+                  </div>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
     </main>
   );
 }

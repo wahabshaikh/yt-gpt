@@ -13,6 +13,7 @@ specifiers:
   get-youtube-id: ^1.0.1
   langchain: ^0.0.52
   next: 13.3.0
+  next-progress: ^2.2.0
   postcss: 8.4.21
   react: 18.2.0
   react-dom: 18.2.0
@@ -35,6 +36,7 @@ dependencies:
   get-youtube-id: 1.0.1
   langchain: 0.0.52_4ciggjybkbopjogtokcoaz7ovu
   next: 13.3.0_biqbaboplfbrettd7655fr4n2y
+  next-progress: 2.2.0_next@13.3.0+react@18.2.0
   postcss: 8.4.21
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
@@ -2149,6 +2151,17 @@ packages:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
     dev: false
 
+  /next-progress/2.2.0_next@13.3.0+react@18.2.0:
+    resolution: {integrity: sha512-g6VBoaj2SfUhKiBSJW/7ju06Ks3r3mUK79HdrLJ7fmvnjeyHPViAKLQDsMN1QIoBcTqN1hR7A8sISiMfm01qmQ==}
+    peerDependencies:
+      next: '>=6.0.0'
+      react: '>=16.0.0'
+    dependencies:
+      next: 13.3.0_biqbaboplfbrettd7655fr4n2y
+      nprogress: 0.2.0
+      react: 18.2.0
+    dev: false
+
   /next-tick/1.1.0:
     resolution: {integrity: sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==}
     dev: false
@@ -2226,6 +2239,10 @@ packages:
   /normalize-range/0.1.2:
     resolution: {integrity: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==}
     engines: {node: '>=0.10.0'}
+    dev: false
+
+  /nprogress/0.2.0:
+    resolution: {integrity: sha512-I19aIingLgR1fmhftnbWWO3dXc0hSxqHQHQb3H8m+K3TnEn/iSeTZZOyvKXWqQESMwuUVnatlCnZdLBZZt2VSA==}
     dev: false
 
   /object-assign/4.1.1:

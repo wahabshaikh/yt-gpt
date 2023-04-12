@@ -1,5 +1,6 @@
 import "~/styles/globals.css";
 import type { AppProps } from "next/app";
+import NextProgress from "next-progress";
 import { Toaster } from "react-hot-toast";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -7,6 +8,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <Component {...pageProps} />
       <Toaster />
+      <NextProgress delay={300} options={{ showSpinner: false }} />
     </>
   );
 }
