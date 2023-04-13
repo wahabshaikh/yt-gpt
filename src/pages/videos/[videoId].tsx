@@ -57,7 +57,7 @@ export default function Home({ video }: { video: Video }) {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <Head>
         <title>{video.title} | YT-GPT</title>
       </Head>
