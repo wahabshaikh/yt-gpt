@@ -82,13 +82,14 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+    <main className="flex  flex-col items-center justify-center h-fit ">
       <Head>
         <title>YT-GPT</title>
       </Head>
 
       <Link href="/">
-        <Image src="/logo.png" alt="YT-GPT" height={120} width={120} />
+      <h3 className="landingHeading">Video GPT</h3>
+        {/* <Image src="/logo.png" alt="YT-GPT" height={120} width={120} /> */}
       </Link>
 
       <form
@@ -104,9 +105,13 @@ export default function Home() {
         }}
       >
         <div className="form-control">
-          <label className="label">
+          <div className="text-center">
+            <p className="landingIntro ">Enter the YouTube Video URL :</p>
+          {/* <label className="label">
             <span className="label-text">Enter the YouTube Video URL</span>
-          </label>
+          </label> */}
+          </div>
+          
           <div className="input-group">
             <input
               type="url"
@@ -140,7 +145,7 @@ export default function Home() {
         </div>
       </form>
 
-      <section className="mt-8">
+      {/* <section className="mt-8">
         <h2 className="text-3xl font-bold">Recent Videos</h2>
         <ul className="mt-8 space-y-4">
           {recentVideos.map((video) => (
@@ -164,7 +169,25 @@ export default function Home() {
             </li>
           ))}
         </ul>
-      </section>
+      </section> */}
+         <footer className="footer">
+        <svg
+          width="24"
+          height="20"
+          viewBox="0 0 24 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M23 1.01006C22.0424 1.68553 20.9821 2.20217 19.86 2.54006C19.2577 1.84757 18.4573 1.35675 17.567 1.13398C16.6767 0.911216 15.7395 0.967251 14.8821 1.29451C14.0247 1.62177 13.2884 2.20446 12.773 2.96377C12.2575 3.72309 11.9877 4.62239 12 5.54006V6.54006C10.2426 6.58562 8.50127 6.19587 6.93101 5.4055C5.36074 4.61513 4.01032 3.44869 3 2.01006C3 2.01006 -1 11.0101 8 15.0101C5.94053 16.408 3.48716 17.109 1 17.0101C10 22.0101 21 17.0101 21 5.51006C20.9991 5.23151 20.9723 4.95365 20.92 4.68006C21.9406 3.67355 22.6608 2.40277 23 1.01006Z"
+            fill="#334155"
+            stroke="#334155"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </footer>
     </main>
   );
 }

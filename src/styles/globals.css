@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.landingIntro {
+  padding-top: 8rem;
+  padding-bottom: 2rem;
+  font-family: sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 22px;
+}
+.landingHeading {
+  padding-top: 6rem;
+  font-family: sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+}
+.footer {
+  text-align: center;
+  color: #464646;
+  padding-bottom: 3rem;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+}
