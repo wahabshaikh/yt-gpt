@@ -17,13 +17,38 @@ type Video = {
 
 export default function Home({ video }: { video: Video }) {
   const [query, setQuery] = useState("");
+  const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchResult = async (query: string) => {
+  const fetchAnswer = async (query: string) => {
     setIsLoading(true);
+    setAnswer("");
 
     try {
-      console.log(query);
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query,
+          videoId: video.video_id,
+        }),
+      });
+
+      if (!response.ok) {
+        toast.error(response.statusText);
+        throw new Error(response.statusText);
+      }
+
+      const data = await response.json();
+
+      if (!data || !data.answer) {
+        toast.error("No answer in response!");
+        throw new Error("No answer in response!");
+      }
+
+      setAnswer(data.answer);
     } catch (error) {
       console.error(error);
     } finally {
@@ -68,7 +93,7 @@ export default function Home({ video }: { video: Video }) {
           e.preventDefault();
 
           if (query) {
-            fetchResult(query);
+            fetchAnswer(query);
           } else {
             toast.error("Please provide a query!");
           }
@@ -107,6 +132,13 @@ export default function Home({ video }: { video: Video }) {
           </div>
         </div>
       </form>
+
+      {!!answer && (
+        <div className="mt-8 border shadow-md p-8 rounded-md bg-base-200">
+          <h3 className="text-xl font-bold">Answer</h3>
+          <p className="mt-4">{answer}</p>
+        </div>
+      )}
     </main>
   );
 }
