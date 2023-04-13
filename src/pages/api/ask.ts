@@ -1,18 +1,19 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from "next";
 import { OpenAI } from "langchain/llms/openai";
 import { PromptTemplate } from "langchain/prompts";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { LLMChain } from "langchain/chains";
 import { supabaseClient } from "~/lib/supabase";
 import { convertToText } from "~/utils";
+import { NextRequest } from "next/server";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export const config = {
+  runtime: "edge",
+};
+
+export default async function handler(req: NextRequest) {
   try {
-    const { query, videoId } = (await req.body) as {
+    const { query, videoId } = (await req.json()) as {
       query?: string;
       videoId?: string;
     };
@@ -27,7 +28,7 @@ export default async function handler(
 
     if (error) throw error;
 
-    if (!data) throw new Error("No data found");
+    if (!data || !data.transcript) throw new Error("No transcript found");
 
     const text = convertToText(data.transcript);
 
@@ -50,12 +51,17 @@ export default async function handler(
       const answerResponse = await chain.call({ context, answer, query });
 
       answer = answerResponse.text;
-      console.log(answer);
     }
 
-    res.status(200).json({ answer });
+    return new Response(JSON.stringify({ answer }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
   } catch (error) {
     console.error(error);
-    res.status(400).end();
+    return new Response("Something went wrong!", {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
   }
 }
