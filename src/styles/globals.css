@@ -1,9 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+body {
+  height: 100vh;
+  /* overflow: hidden; */
+}
 .landingIntro {
-  padding-top: 8rem;
-  padding-bottom: 2rem;
+  padding-top: 4rem;
+  padding-bottom: 1.2rem;
   font-family: sans-serif;
   font-size: 18px;
   font-weight: 500;
@@ -22,4 +26,50 @@
   position: absolute;
   bottom: 0;
   left: 50%;
+}
+.videoSection2 {
+  background: #f6f6f6;
+}
+.videoText {
+  font-family: sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 160%;
+  /* or 26px */
+
+  letter-spacing: -0.02em;
+
+  color: #334155;
+}
+.youtubeIframe {
+  border-radius: 10px;
+  width: full;
+  width: 600px;
+  height: 326px;
+  margin-top: 2rem;
+}
+.summaryForm {
+  position: fixed;
+  z-index: 100;
+  bottom: 0px;
+  left: 00px;
+  right: 50%;
+  background-color: #fff;
+  padding: 20px 40px;
+}
+.article {
+  height: calc(100vh - 92px);
+  overflow: auto;
+  padding-bottom: 180px;
+}
+.video-notes {
+  height: calc(100vh - 82px);
+  overflow: auto;
+  padding-bottom: 180px;
+
+  /* padding-bottom: 60px; */
+}
+.textColor {
+  color: #686868;
 }
