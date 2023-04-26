@@ -1,4 +1,4 @@
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import clsx from "clsx";
 import getYouTubeID from "get-youtube-id";
 import { useRouter } from "next/router";
@@ -12,6 +12,7 @@ interface URLBarProps {
 const URLBar = ({ initialUrl }: URLBarProps) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
+  const user = useUser();
 
   const [url, setUrl] = useState(initialUrl || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +41,11 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
 
         if (!request.ok) throw new Error(`Couldn't save video details`);
       }
+
+      await supabaseClient.from("history").insert({
+        user_id: user?.id,
+        video_id: videoId,
+      });
 
       // await toast.promise(
       //   fetch("/api/save-video-details", {

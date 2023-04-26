@@ -7,6 +7,7 @@ import { loadSummarizationChain } from "langchain/chains";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { convertToText } from "~/utils";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { supabaseClient } from "~/lib/supabase";
 
 const youtube = new Client();
 
@@ -15,9 +16,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const supabaseClient = createServerSupabaseClient({ req, res });
-    const { data } = await supabaseClient.auth.getUser();
-
     const { videoId } = (await req.body) as {
       videoId?: string;
     };
@@ -54,11 +52,6 @@ export default async function handler(
     });
 
     if (error) throw error;
-
-    await supabaseClient.from("history").insert({
-      user_id: data.user?.id,
-      video_id: videoId,
-    });
 
     res.status(200).end();
   } catch (error) {
