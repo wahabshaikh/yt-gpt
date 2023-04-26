@@ -2,11 +2,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Client } from "youtubei";
 import { YoutubeTranscript } from "youtube-transcript";
-import { OpenAI } from "langchain/llms/openai";
-import { loadSummarizationChain } from "langchain/chains";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { convertToText } from "~/utils";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { supabaseClient } from "~/lib/supabase";
 
 const youtube = new Client();
@@ -28,27 +23,12 @@ export default async function handler(
 
     const transcript = await YoutubeTranscript.fetchTranscript(videoId);
 
-    const text = convertToText(transcript);
-
-    const model = new OpenAI({ temperature: 0 });
-    const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 3000,
-    });
-    const docs = await textSplitter.createDocuments([text]);
-
-    const chain = loadSummarizationChain(model);
-    const summarizeResponse = await chain.call({
-      input_documents: docs,
-    });
-    const summary = summarizeResponse.text;
-
     const { error } = await supabaseClient.from("videos").insert({
       url: `https://youtu.be/${videoId}`,
       video_id: videoId,
       title,
       thumbnail: thumbnails[thumbnails.length - 1].url,
       transcript,
-      summary,
     });
 
     if (error) throw error;

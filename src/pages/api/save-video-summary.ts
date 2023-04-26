@@ -11,15 +11,15 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const { url } = (await req.body) as {
-      url?: string;
+    const { videoId } = (await req.body) as {
+      videoId?: string;
     };
-    if (!url) throw new Error("No url found in req.body");
+    if (!videoId) throw new Error("No videoId found in req.body");
 
     const { data, error } = await supabaseClient
       .from("videos")
       .select("transcript")
-      .eq("url", url)
+      .eq("video_id", videoId)
       .single();
 
     if (error) throw error;
@@ -45,7 +45,7 @@ export default async function handler(
       .update({
         summary,
       })
-      .eq("url", url);
+      .eq("video_id", videoId);
 
     if (updateError) throw updateError;
 

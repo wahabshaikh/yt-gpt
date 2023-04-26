@@ -33,13 +33,23 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         .eq("video_id", videoId);
 
       if (!data || data.length === 0) {
-        const request = await fetch("/api/save-video-details", {
+        const saveDetailsRequest = await fetch("/api/save-video-details", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId }),
         });
 
-        if (!request.ok) throw new Error(`Couldn't save video details`);
+        if (!saveDetailsRequest.ok)
+          throw new Error(`Couldn't save video details`);
+
+        const saveSummaryRequest = await fetch("/api/save-video-summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId }),
+        });
+
+        if (!saveSummaryRequest.ok)
+          throw new Error(`Couldn't save video summary`);
       }
 
       await supabaseClient.from("history").insert({
