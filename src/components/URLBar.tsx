@@ -5,11 +5,11 @@ import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
 
-interface InputBarProps {
+interface URLBarProps {
   initialUrl?: string;
 }
 
-const InputBar = ({ initialUrl }: InputBarProps) => {
+const URLBar = ({ initialUrl }: URLBarProps) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
 
@@ -124,4 +124,4 @@ const InputBar = ({ initialUrl }: InputBarProps) => {
   );
 };
 
-export default InputBar;
+export default URLBar;

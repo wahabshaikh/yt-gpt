@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Login from "~/components/Login";
-import InputBar from "~/components/InputBar";
+import URLBar from "~/components/URLBar";
 
 export default function Home() {
   const supabaseClient = useSupabaseClient();
@@ -69,33 +69,8 @@ export default function Home() {
         </p>
 
         <div className="mt-12 max-w-3xl w-full">
-          <InputBar />
+          <URLBar />
         </div>
-        {/* <section className="mt-8">
-        <h2 className="text-3xl font-bold">Recent Videos</h2>
-        <ul className="mt-8 space-y-4">
-        {recentVideos.map((video) => (
-          <li key={video.video_id}>
-          <Link href={`/videos/${video.video_id}`}>
-          <div className="flex gap-4 items-center">
-                  <Image
-                    src={video.thumbnail}
-                    alt={video.title}
-                    height={120}
-                    width={120}
-                    />
-                    <div>
-                    <h3 className="font-bold">{video.title}</h3>
-                    <a href={video.url} target="_blank" className="link">
-                      Watch Video
-                    </a>
-                    </div>
-                </div>
-              </Link>
-            </li>
-            ))}
-        </ul>
-      </section> */}
       </main>
 
       <footer className="mx-auto py-8">
