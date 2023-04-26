@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import clsx from "clsx";
 import Image from "next/image";
@@ -7,8 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import getYouTubeID from "get-youtube-id";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
+import Login from "~/components/Login";
 
 export default function Home() {
   const router = useRouter();
@@ -54,12 +53,12 @@ export default function Home() {
         return;
       }
 
-      const { count } = await supabaseClient
+      const { data } = await supabaseClient
         .from("videos")
-        .select("video_id")
+        .select("*")
         .eq("video_id", videoId);
 
-      if (!count || count === 0) {
+      if (!data || data.length === 0) {
         const request = await fetch("/api/save-video-details", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -105,28 +104,7 @@ export default function Home() {
   };
 
   if (!user) {
-    return (
-      <main className="mx-auto flex flex-col items-center justify-center px-4 min-h-screen max-w-3xl">
-        <Head>
-          <title>Login | YTJarvis</title>
-        </Head>
-
-        <Link href="/">
-          <Image src="/logo.svg" alt="YTJarvis" height={120} width={240} />
-        </Link>
-
-        <div className="mt-12 w-full">
-          <Auth
-            redirectTo="/"
-            appearance={{ theme: ThemeSupa }}
-            supabaseClient={supabaseClient}
-            providers={[]}
-            socialLayout="vertical"
-            magicLink
-          />
-        </div>
-      </main>
-    );
+    return <Login />;
   }
 
   return (
