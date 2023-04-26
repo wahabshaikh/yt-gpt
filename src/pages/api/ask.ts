@@ -13,11 +13,11 @@ export const config = {
 
 export default async function handler(req: NextRequest) {
   try {
-    const { query, videoId } = (await req.json()) as {
-      query?: string;
+    const { question, videoId } = (await req.json()) as {
+      question?: string;
       videoId?: string;
     };
-    if (!query) throw new Error("No query found in req.body");
+    if (!question) throw new Error("No question found in req.body");
     if (!videoId) throw new Error("No videoId found in req.body");
 
     const { data, error } = await supabaseClient
@@ -42,13 +42,13 @@ export default async function handler(req: NextRequest) {
     for (let i = 0; i < docs.length; i++) {
       const context = docs[i].pageContent;
       const template =
-        "Answer the query based on the following context:\n\n{context}\n\nAlso consider the previous incomplete answer: {answer}\n\nQuery: {query}";
+        "Answer the question based on the following context:\n\n{context}\n\nAlso consider the previous incomplete answer: {answer}\n\nquestion: {question}";
       const prompt = new PromptTemplate({
         template,
-        inputVariables: ["context", "answer", "query"],
+        inputVariables: ["context", "answer", "question"],
       });
       const chain = new LLMChain({ llm: model, prompt });
-      const answerResponse = await chain.call({ context, answer, query });
+      const answerResponse = await chain.call({ context, answer, question });
 
       answer = answerResponse.text;
     }
