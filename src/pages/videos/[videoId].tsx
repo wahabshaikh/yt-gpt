@@ -1,16 +1,13 @@
-import Head from "next/head";
 import { GetStaticPaths, GetStaticProps } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import YouTube from "react-youtube";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import Login from "~/components/Login";
+import { User, useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import URLBar from "~/components/URLBar";
 import { supabaseClient } from "~/lib/supabase";
 import Card from "~/components/Card";
 import clsx from "clsx";
+import Layout from "~/components/Layout";
 
 type Video = {
   video_id: string;
@@ -20,30 +17,30 @@ type Video = {
   summary: string;
 };
 
+type QnA = { question: string; answer: string };
+
 export default function Home({ video }: { video: Video }) {
   const supabaseClient = useSupabaseClient();
   const user = useUser();
 
   const [question, setQuestion] = useState("");
-  const [history, setHistory] = useState<
-    { question: string; answer: string }[]
-  >([]);
-  const [notes, setNotes] = useState<{ question: string; answer: string }[]>(
-    []
-  );
+  const [history, setHistory] = useState<QnA[]>([]);
+  const [notes, setNotes] = useState<QnA[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchNotes();
+    if (!user) {
+      return;
     }
+
+    fetchNotes(user);
   }, [user]);
 
-  const fetchNotes = async () => {
+  const fetchNotes = async (user: User) => {
     const { data, error } = await supabaseClient
       .from("history")
       .select("notes")
-      .eq("user_id", user?.id)
+      .eq("user_id", user.id)
       .eq("video_id", video.video_id)
       .single();
 
@@ -92,37 +89,14 @@ export default function Home({ video }: { video: Video }) {
     }
   };
 
-  if (!user) {
-    return <Login />;
-  }
-
   return (
-    <div className="flex flex-col h-screen">
-      <Head>
-        <title>{video.title} | YTJarvis</title>
-      </Head>
-
-      <nav className="navbar bg-base-100 max-w-7xl mx-auto">
-        <div className="flex-1">
-          <Link href="/" className="btn btn-ghost normal-case text-xl p-0">
-            <Image src="/logo.svg" alt="YTJarvis" height={120} width={120} />
-          </Link>
-        </div>
-        <div className="flex-none">
-          <ul className="menu menu-horizontal px-1">
-            <li>
-              <button onClick={() => supabaseClient.auth.signOut()}>
-                Sign out
-              </button>
-            </li>
-          </ul>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl px-4 py-12 flex-1 grid grid-cols-2 gap-16">
-        <div className="order-2">
+    <Layout title={video.title}>
+      <main className="mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-2 gap-16">
+        <div className="md:order-2">
+          {/* Video Title */}
           <h1 className="font-bold">{video.title}</h1>
 
+          {/* YouTube Embed */}
           <div className="mt-8 rounded-md overflow-hidden">
             <YouTube
               videoId={video.video_id}
@@ -133,9 +107,45 @@ export default function Home({ video }: { video: Video }) {
             />
           </div>
 
-          <div className="mt-8">
+          {/* Notes */}
+          <section className="mt-8">
             <h2 className="font-semibold">My Notes</h2>
             <ul className="mt-8 space-y-4">
+              {notes.length === 0 && (
+                <p className="flex items-center gap-2">
+                  <span>No notes yet... Click on</span>{" "}
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
+                      stroke="#464646"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 8V16"
+                      stroke="#464646"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8 12H16"
+                      stroke="#464646"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>{" "}
+                  <span>to add a note!</span>
+                </p>
+              )}
               {notes.map((item, index) => (
                 <Card
                   key={index}
@@ -149,7 +159,7 @@ export default function Home({ video }: { video: Video }) {
                     const { error } = await supabaseClient
                       .from("history")
                       .update({ notes: updatedNotes })
-                      .eq("user_id", user.id)
+                      .eq("user_id", user?.id)
                       .eq("video_id", video.video_id);
 
                     if (error)
@@ -162,10 +172,10 @@ export default function Home({ video }: { video: Video }) {
                 />
               ))}
             </ul>
-          </div>
+          </section>
         </div>
 
-        <div className="order-1 flex flex-col">
+        <div className="md:order-1 flex flex-col">
           <URLBar initialUrl={video.url} />
 
           <ul className="mt-8 space-y-4">
@@ -185,15 +195,16 @@ export default function Home({ video }: { video: Video }) {
                 const { data, error } = await supabaseClient
                   .from("history")
                   .update({ notes: updatedNotes })
-                  .eq("user_id", user.id)
+                  .eq("user_id", user?.id)
                   .eq("video_id", video.video_id)
                   .select();
 
-                if (error)
+                if (error) {
                   toast.error(
                     "Something went wrong while adding to your notes!"
                   );
-
+                  return;
+                }
                 setNotes(updatedNotes);
               }}
             />
@@ -209,17 +220,18 @@ export default function Home({ video }: { video: Video }) {
                     { question: item.question, answer: item.answer },
                   ];
 
-                  const { data, error } = await supabaseClient
+                  const { error } = await supabaseClient
                     .from("history")
                     .update({ notes: updatedNotes })
-                    .eq("user_id", user.id)
-                    .eq("video_id", video.video_id)
-                    .select();
+                    .eq("user_id", user?.id)
+                    .eq("video_id", video.video_id);
 
-                  if (error)
+                  if (error) {
                     toast.error(
                       "Something went wrong while adding to your notes!"
                     );
+                    return;
+                  }
 
                   setNotes(updatedNotes);
                 }}
@@ -274,7 +286,7 @@ export default function Home({ video }: { video: Video }) {
           </form>
         </div>
       </main>
-    </div>
+    </Layout>
   );
 }
 

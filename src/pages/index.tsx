@@ -1,14 +1,9 @@
-import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser } from "@supabase/auth-helpers-react";
-import Login from "~/components/Login";
 import URLBar from "~/components/URLBar";
-import Nav from "~/components/Nav";
+import Layout from "~/components/Layout";
 
 export default function Home() {
-  const user = useUser();
-
   // const [recentVideos, setRecentVideos] = useState<
   //   { video_id: string; title: string; thumbnail: string; url: string }[]
   // >([]);
@@ -36,18 +31,8 @@ export default function Home() {
   //   setRecentVideos(data);
   // };
 
-  if (!user) {
-    return <Login />;
-  }
-
   return (
-    <div className="flex flex-col min-h-screen">
-      <Head>
-        <title>YTJarvis</title>
-      </Head>
-
-      <Nav />
-
+    <Layout>
       <main className="mx-auto max-w-3xl px-4 py-12 flex flex-col items-center justify-center flex-1">
         <Link href="/">
           <Image src="/logo.svg" alt="YTJarvis" height={120} width={240} />
@@ -80,6 +65,6 @@ export default function Home() {
           </svg>
         </a>
       </footer>
-    </div>
+    </Layout>
   );
 }
