@@ -29,7 +29,7 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
 
       const { data, error } = await supabaseClient
         .from("videos")
-        .select("*")
+        .select()
         .eq("video_id", videoId);
 
       if (error) {
@@ -52,17 +52,16 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
       // For saving data
       const { data: userData, error: userDataError } = await supabaseClient
         .from("user_data")
-        .select("*")
+        .select()
         .eq("user_id", user?.id)
-        .eq("video_id", videoId)
-        .single();
+        .eq("video_id", videoId);
 
       if (userDataError) {
         toast.error(userDataError.message);
         return;
       }
 
-      if (!userData) {
+      if (!userData || userData.length === 0) {
         const { error } = await supabaseClient.from("user_data").insert({
           user_id: user?.id,
           video_id: videoId,
