@@ -1,12 +1,12 @@
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@supabase/auth-helpers-react";
 import Login from "~/components/Login";
 import URLBar from "~/components/URLBar";
+import Nav from "~/components/Nav";
 
 export default function Home() {
-  const supabaseClient = useSupabaseClient();
   const user = useUser();
 
   // const [recentVideos, setRecentVideos] = useState<
@@ -46,17 +46,7 @@ export default function Home() {
         <title>YTJarvis</title>
       </Head>
 
-      <nav className="navbar bg-base-100">
-        <div className="ml-auto">
-          <ul className="menu menu-horizontal px-1">
-            <li>
-              <button onClick={() => supabaseClient.auth.signOut()}>
-                Sign out
-              </button>
-            </li>
-          </ul>
-        </div>
-      </nav>
+      <Nav />
 
       <main className="mx-auto max-w-3xl px-4 py-12 flex flex-col items-center justify-center flex-1">
         <Link href="/">
