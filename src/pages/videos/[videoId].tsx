@@ -49,7 +49,7 @@ export default function Home({ video }: { video: Video }) {
       return;
     }
 
-    setNotes(data?.notes || []);
+    setNotes(data?.notes.reverse() || []);
   };
 
   const addToNotes = async (question: string, answer: string) => {
@@ -66,7 +66,7 @@ export default function Home({ video }: { video: Video }) {
       return;
     }
 
-    setNotes(updatedNotes);
+    setNotes(updatedNotes.reverse());
   };
 
   const removeFromNotes = async (index: number) => {
@@ -169,7 +169,7 @@ export default function Home({ video }: { video: Video }) {
       }
 
       const updatedHistory = [...history, { question, answer: data.answer }];
-      setHistory(updatedHistory);
+      setHistory(updatedHistory.reverse());
     } catch (error) {
       console.error(error);
     } finally {
