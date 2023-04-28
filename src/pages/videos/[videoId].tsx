@@ -36,56 +36,6 @@ export default function Home({ video }: { video: Video }) {
     fetchNotes(user);
   }, [user]);
 
-  const summarizeVideo = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabaseClient
-        .from("user_data")
-        .select("summary")
-        .eq("user_id", user?.id)
-        .eq("video_id", video.video_id)
-        .single();
-
-      if (error) {
-        toast.error("Error fetching summary");
-        return;
-      }
-
-      if (!data || !data.summary) {
-        const text = convertToText(video.transcript);
-
-        const response = await toast.promise(
-          fetch("/api/save-video-summary", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ videoId: video.video_id, text }),
-          }),
-          {
-            loading: "Summarizing the video...",
-            success: "Successfully summarized the video!",
-            error: "Something went wrong while summarizing the video!",
-          }
-        );
-
-        if (!response.ok) {
-          toast.error("Something went wrong while summarizing the video!");
-          return;
-        }
-
-        const data = await response.json();
-
-        setHistory([{ question: "Summary", answer: data.summary }]);
-      } else {
-        setHistory([{ question: "Summary", answer: data.summary }]);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setQuestion("");
-      setIsLoading(false);
-    }
-  };
-
   const fetchNotes = async (user: User) => {
     const { data, error } = await supabaseClient
       .from("user_data")
@@ -137,10 +87,63 @@ export default function Home({ video }: { video: Video }) {
     setNotes(updatedNotes);
   };
 
+  const summarizeVideo = async () => {
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabaseClient
+        .from("user_data")
+        .select("summary")
+        .eq("user_id", user?.id)
+        .eq("video_id", video.video_id)
+        .single();
+
+      if (error) {
+        toast.error("Error fetching summary");
+        return;
+      }
+
+      if (!data || !data.summary) {
+        const text = convertToText(video.transcript);
+
+        const response = await toast.promise(
+          fetch("/api/save-video-summary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId: video.video_id, text }),
+          }),
+          {
+            loading: "Summarizing the video...",
+            success: "Successfully summarized the video!",
+            error: "Something went wrong while summarizing the video!",
+          }
+        );
+
+        if (!response.ok) {
+          toast.error("Something went wrong while summarizing the video!");
+          return;
+        }
+
+        const data = await response.json();
+
+        setHistory([{ question: "Summary", answer: data.summary }]);
+      } else {
+        setHistory([{ question: "Summary", answer: data.summary }]);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setQuestion("");
+      setIsLoading(false);
+    }
+  };
+
   const fetchAnswer = async (question: string) => {
     setIsLoading(true);
 
     try {
+      const text = convertToText(video.transcript);
+
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: {
@@ -148,6 +151,7 @@ export default function Home({ video }: { video: Video }) {
         },
         body: JSON.stringify({
           question,
+          text,
           videoId: video.video_id,
         }),
       });
