@@ -27,65 +27,41 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         return;
       }
 
-      const { data } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from("videos")
         .select("*")
         .eq("video_id", videoId);
 
-      if (!data || data.length === 0) {
-        const saveDetailsRequest = await fetch("/api/save-video-details", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId }),
-        });
-
-        if (!saveDetailsRequest.ok)
-          throw new Error(`Couldn't save video details`);
-
-        const saveSummaryRequest = await fetch("/api/save-video-summary", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId }),
-        });
-
-        if (!saveSummaryRequest.ok)
-          throw new Error(`Couldn't save video summary`);
+      if (error) {
+        toast.error(error.message);
+        return;
       }
 
-      await supabaseClient.from("history").insert({
-        user_id: user?.id,
-        video_id: videoId,
-      });
+      if (!data || data.length === 0) {
+        const response = await fetch("/api/save-video-details", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId }),
+        });
 
-      // await toast.promise(
-      //   fetch("/api/save-video-details", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({ url }),
-      //   }),
-      //   {
-      //     loading: "Fetching video details...",
-      //     success: "Fetched video details successfully!",
-      //     error: "Something went wrong while fetching video details!",
-      //   }
-      // );
+        const data = await response.json();
 
-      // await toast.promise(
-      //   fetch("/api/save-video-summary", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({ url }),
-      //   }),
-      //   {
-      //     loading: "Fetching video summary...",
-      //     success: "Fetched video summary successfully!",
-      //     error: "Something went wrong while fetching video summary!",
-      //   }
-      // );
+        if (!response.ok) throw new Error(data.message);
+      }
+
+      // For saving notes
+      const { error: insertError } = await supabaseClient
+        .from("history")
+        .insert({
+          user_id: user?.id,
+          video_id: videoId,
+        });
+
+      if (insertError) throw insertError;
 
       router.push(`/videos/${videoId}`);
-    } catch (error) {
-      toast.error("Something went wrong!");
+    } catch (error: any) {
+      toast.error(error.message);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -108,7 +84,7 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         <div className="input-group">
           <input
             type="url"
-            className="input input-bordered w-full"
+            className="input input-bordered border-neutral w-full"
             placeholder="https://www.youtube.com/watch?v="
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -116,20 +92,25 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
           />
           <button
             type="submit"
-            className={clsx("btn btn-square", isLoading && "loading")}
+            className={clsx(
+              "btn btn-square btn-outline",
+              isLoading && "loading"
+            )}
             disabled={isLoading}
           >
             {!isLoading && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
+                fill="none"
                 viewBox="0 0 24 24"
-                fill="currentColor"
+                strokeWidth={1.5}
+                stroke="currentColor"
                 className="w-6 h-6"
               >
                 <path
-                  fillRule="evenodd"
-                  d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
-                  clipRule="evenodd"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
                 />
               </svg>
             )}
