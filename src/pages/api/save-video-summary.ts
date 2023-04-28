@@ -11,26 +11,17 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const { videoId } = (await req.body) as {
+    const { videoId, text } = (await req.body) as {
       videoId?: string;
+      text?: string;
     };
     if (!videoId) throw new Error("No videoId found in req.body");
-
-    const { data, error } = await supabaseClient
-      .from("videos")
-      .select("transcript")
-      .eq("video_id", videoId)
-      .single();
-
-    if (error) throw error;
-
-    if (!data) throw new Error("No data found");
-
-    const text = convertToText(data.transcript);
+    if (!text) throw new Error("No text found in req.body");
 
     const model = new OpenAI({ temperature: 0 });
     const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 3000,
+      chunkSize: 2000,
+      chunkOverlap: 100,
     });
     const docs = await textSplitter.createDocuments([text]);
 
@@ -41,7 +32,7 @@ export default async function handler(
     const summary = summarizeResponse.text;
 
     const { error: updateError } = await supabaseClient
-      .from("videos")
+      .from("user_data")
       .update({
         summary,
       })
@@ -49,9 +40,9 @@ export default async function handler(
 
     if (updateError) throw updateError;
 
-    res.status(200).end();
+    res.status(200).json({ summary });
   } catch (error) {
     console.error(error);
-    res.status(400).end();
+    res.status(400).json({});
   }
 }

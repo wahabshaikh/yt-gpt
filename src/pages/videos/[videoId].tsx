@@ -3,16 +3,18 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import YouTube from "react-youtube";
 import { User, useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import URLBar from "~/components/URLBar";
-import { supabaseClient } from "~/lib/supabase";
-import Card from "~/components/Card";
 import clsx from "clsx";
+import URLBar from "~/components/URLBar";
+import Card from "~/components/Card";
 import Layout from "~/components/Layout";
+import { supabaseClient } from "~/lib/supabase";
+import { convertToText } from "~/utils";
 
 type Video = {
   video_id: string;
   url: string;
   title: string;
+  transcript: { text: string; offset: number; duration: number }[];
 };
 
 type QnA = { question: string; answer: string };
@@ -21,7 +23,7 @@ export default function Home({ video }: { video: Video }) {
   const supabaseClient = useSupabaseClient();
   const user = useUser();
 
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState("Summarize");
   const [history, setHistory] = useState<QnA[]>([]);
   const [notes, setNotes] = useState<QnA[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +35,56 @@ export default function Home({ video }: { video: Video }) {
 
     fetchNotes(user);
   }, [user]);
+
+  const summarizeVideo = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabaseClient
+        .from("user_data")
+        .select("summary")
+        .eq("user_id", user?.id)
+        .eq("video_id", video.video_id)
+        .single();
+
+      if (error) {
+        toast.error("Error fetching summary");
+        return;
+      }
+
+      if (!data || !data.summary) {
+        const text = convertToText(video.transcript);
+
+        const response = await toast.promise(
+          fetch("/api/save-video-summary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId: video.video_id, text }),
+          }),
+          {
+            loading: "Summarizing the video...",
+            success: "Successfully summarized the video!",
+            error: "Something went wrong while summarizing the video!",
+          }
+        );
+
+        if (!response.ok) {
+          toast.error("Something went wrong while summarizing the video!");
+          return;
+        }
+
+        const data = await response.json();
+
+        setHistory([{ question: "Summary", answer: data.summary }]);
+      } else {
+        setHistory([{ question: "Summary", answer: data.summary }]);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setQuestion("");
+      setIsLoading(false);
+    }
+  };
 
   const fetchNotes = async (user: User) => {
     const { data, error } = await supabaseClient
@@ -124,7 +176,7 @@ export default function Home({ video }: { video: Video }) {
 
   return (
     <Layout title={video.title}>
-      <main className="mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-2 gap-16">
+      <main className="mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-2 gap-16 w-full">
         <div>
           {/* Video Title */}
           <h1 className="font-bold">{video.title}</h1>
@@ -195,32 +247,18 @@ export default function Home({ video }: { video: Video }) {
         <div className=" flex flex-col">
           <URLBar initialUrl={video.url} />
 
-          <ul className="mt-8 space-y-4">
-            <Card
-              action="add"
-              title="Summary"
-              content={"TODO"}
-              handleClick={() => addToNotes("Summary", "TODO")}
-            />
-
-            {history.map((item, index) => (
-              <Card
-                key={index}
-                action="add"
-                title={`Question: ${item.question}`}
-                content={item.answer}
-                handleClick={() => addToNotes(item.question, item.answer)}
-              />
-            ))}
-          </ul>
+          <div className="divider uppercase">Ask your question below</div>
 
           <form
-            className="mt-8"
             onSubmit={(e) => {
               e.preventDefault();
 
               if (question) {
-                fetchAnswer(question);
+                if (question === "Summarize") {
+                  summarizeVideo();
+                } else {
+                  fetchAnswer(question);
+                }
               } else {
                 toast.error("Please provide a question!");
               }
@@ -259,6 +297,18 @@ export default function Home({ video }: { video: Video }) {
               </div>
             </div>
           </form>
+
+          <ul className="mt-8 space-y-4">
+            {history.map((item, index) => (
+              <Card
+                key={index}
+                action="add"
+                title={`Question: ${item.question}`}
+                content={item.answer}
+                handleClick={() => addToNotes(item.question, item.answer)}
+              />
+            ))}
+          </ul>
         </div>
       </main>
     </Layout>
