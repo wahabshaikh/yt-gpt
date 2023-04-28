@@ -51,7 +51,7 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
 
       // For saving notes
       const { error: insertError } = await supabaseClient
-        .from("history")
+        .from("user_data")
         .insert({
           user_id: user?.id,
           video_id: videoId,

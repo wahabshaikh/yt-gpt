@@ -13,8 +13,6 @@ type Video = {
   video_id: string;
   url: string;
   title: string;
-  thumbnail: string;
-  summary: string;
 };
 
 type QnA = { question: string; answer: string };
@@ -38,7 +36,7 @@ export default function Home({ video }: { video: Video }) {
 
   const fetchNotes = async (user: User) => {
     const { data, error } = await supabaseClient
-      .from("history")
+      .from("user_data")
       .select("notes")
       .eq("user_id", user.id)
       .eq("video_id", video.video_id)
@@ -50,6 +48,41 @@ export default function Home({ video }: { video: Video }) {
     }
 
     setNotes(data?.notes || []);
+  };
+
+  const addToNotes = async (question: string, answer: string) => {
+    const updatedNotes = [...notes, { question, answer }];
+
+    const { error } = await supabaseClient
+      .from("user_data")
+      .update({ notes: updatedNotes })
+      .eq("user_id", user?.id)
+      .eq("video_id", video.video_id);
+
+    if (error) {
+      toast.error("Something went wrong while adding to your notes!");
+      return;
+    }
+
+    setNotes(updatedNotes);
+  };
+
+  const removeFromNotes = async (index: number) => {
+    const updatedNotes = [...notes];
+    updatedNotes.splice(index, 1);
+
+    const { error } = await supabaseClient
+      .from("user_data")
+      .update({ notes: updatedNotes })
+      .eq("user_id", user?.id)
+      .eq("video_id", video.video_id);
+
+    if (error) {
+      toast.error("Something went wrong while removing from your notes!");
+      return;
+    }
+
+    setNotes(updatedNotes);
   };
 
   const fetchAnswer = async (question: string) => {
@@ -92,7 +125,7 @@ export default function Home({ video }: { video: Video }) {
   return (
     <Layout title={video.title}>
       <main className="mx-auto max-w-7xl px-4 py-12 grid md:grid-cols-2 gap-16">
-        <div className="md:order-2">
+        <div>
           {/* Video Title */}
           <h1 className="font-bold">{video.title}</h1>
 
@@ -152,89 +185,31 @@ export default function Home({ video }: { video: Video }) {
                   action="remove"
                   title={`Question: ${item.question}`}
                   content={item.answer}
-                  handleClick={async () => {
-                    const updatedNotes = [...notes];
-                    updatedNotes.splice(index, 1);
-
-                    const { error } = await supabaseClient
-                      .from("history")
-                      .update({ notes: updatedNotes })
-                      .eq("user_id", user?.id)
-                      .eq("video_id", video.video_id);
-
-                    if (error)
-                      toast.error(
-                        "Something went wrong while removing from your notes!"
-                      );
-
-                    setNotes(updatedNotes);
-                  }}
+                  handleClick={() => removeFromNotes(index)}
                 />
               ))}
             </ul>
           </section>
         </div>
 
-        <div className="md:order-1 flex flex-col">
+        <div className=" flex flex-col">
           <URLBar initialUrl={video.url} />
 
           <ul className="mt-8 space-y-4">
             <Card
               action="add"
               title="Summary"
-              content={video.summary}
-              handleClick={async () => {
-                const updatedNotes = [
-                  ...notes,
-                  {
-                    question: "Summary",
-                    answer: video.summary,
-                  },
-                ];
-
-                const { data, error } = await supabaseClient
-                  .from("history")
-                  .update({ notes: updatedNotes })
-                  .eq("user_id", user?.id)
-                  .eq("video_id", video.video_id)
-                  .select();
-
-                if (error) {
-                  toast.error(
-                    "Something went wrong while adding to your notes!"
-                  );
-                  return;
-                }
-                setNotes(updatedNotes);
-              }}
+              content={"TODO"}
+              handleClick={() => addToNotes("Summary", "TODO")}
             />
+
             {history.map((item, index) => (
               <Card
                 key={index}
                 action="add"
                 title={`Question: ${item.question}`}
                 content={item.answer}
-                handleClick={async () => {
-                  const updatedNotes = [
-                    ...notes,
-                    { question: item.question, answer: item.answer },
-                  ];
-
-                  const { error } = await supabaseClient
-                    .from("history")
-                    .update({ notes: updatedNotes })
-                    .eq("user_id", user?.id)
-                    .eq("video_id", video.video_id);
-
-                  if (error) {
-                    toast.error(
-                      "Something went wrong while adding to your notes!"
-                    );
-                    return;
-                  }
-
-                  setNotes(updatedNotes);
-                }}
+                handleClick={() => addToNotes(item.question, item.answer)}
               />
             ))}
           </ul>
