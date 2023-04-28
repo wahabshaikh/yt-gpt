@@ -49,15 +49,27 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         if (!response.ok) throw new Error(data.message);
       }
 
-      // For saving notes
-      const { error: insertError } = await supabaseClient
+      // For saving data
+      const { data: userData, error: userDataError } = await supabaseClient
         .from("user_data")
-        .insert({
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("video_id", videoId)
+        .single();
+
+      if (userDataError) {
+        toast.error(userDataError.message);
+        return;
+      }
+
+      if (!userData) {
+        const { error } = await supabaseClient.from("user_data").insert({
           user_id: user?.id,
           video_id: videoId,
         });
 
-      if (insertError) throw insertError;
+        if (error) throw error;
+      }
 
       router.push(`/videos/${videoId}`);
     } catch (error: any) {
