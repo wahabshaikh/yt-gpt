@@ -3,13 +3,24 @@ import { OpenAI } from "langchain/llms/openai";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { loadQAMapReduceChain } from "langchain/chains";
 import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest } from "next/server";
+
+export const config = {
+  runtime: "edge",
+};
 
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+  // req: NextApiRequest,
+  // res: NextApiResponse
+  req: NextRequest
 ) {
   try {
-    const { question, text, videoId } = (await req.body) as {
+    // const { question, text, videoId } = (await req.body) as {
+    //   question?: string;
+    //   text?: string;
+    //   videoId?: string;
+    // };
+    const { question, text, videoId } = (await req.json()) as {
       question?: string;
       text?: string;
       videoId?: string;
@@ -47,8 +58,17 @@ export default async function handler(
     //   answer = answerResponse.text;
     // }
 
-    res.status(200).json({ answer });
+    // res.status(200).json({ answer });
+    return new Response(JSON.stringify({ answer }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
   } catch (error) {
-    res.status(400).json({});
+    console.error(error);
+    return new Response("Something went wrong!", {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+    // res.status(400).json({});
   }
 }
