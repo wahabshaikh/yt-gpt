@@ -49,7 +49,7 @@ export default function Home({ video }: { video: Video }) {
       return;
     }
 
-    setNotes(data?.notes.reverse() || []);
+    setNotes(data?.notes?.reverse() || []);
   };
 
   const addToNotes = async (question: string, answer: string) => {
@@ -107,7 +107,7 @@ export default function Home({ video }: { video: Video }) {
         const text = convertToText(video.transcript);
 
         const response = await toast.promise(
-          fetch("/api/save-video-summary", {
+          fetch("/api/summarize", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ videoId: video.video_id, text }),
