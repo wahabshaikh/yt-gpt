@@ -1,7 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 import { OpenAI } from "langchain/llms/openai";
-import { AnalyzeDocumentChain, loadSummarizationChain } from "langchain/chains";
+import { loadSummarizationChain } from "langchain/chains";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { supabaseClient } from "~/lib/supabase";
 import { NextRequest } from "next/server";
 
@@ -19,6 +20,7 @@ export default async function handler(
     //   videoId?: string;
     //   text?: string;
     // };
+
     const { videoId, text } = (await req.json()) as {
       videoId?: string;
       text?: string;
@@ -27,12 +29,15 @@ export default async function handler(
     if (!text) throw new Error("No text found in req.body");
 
     const model = new OpenAI({ temperature: 0 });
-    const combineDocsChain = loadSummarizationChain(model);
-    const chain = new AnalyzeDocumentChain({
-      combineDocumentsChain: combineDocsChain,
+    const textSplitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 2000,
+      chunkOverlap: 100,
     });
+    const docs = await textSplitter.createDocuments([text]);
+
+    const chain = loadSummarizationChain(model);
     const summarizeResponse = await chain.call({
-      input_document: text,
+      input_documents: docs,
     });
     const summary = summarizeResponse.text;
 
@@ -45,7 +50,6 @@ export default async function handler(
 
     if (updateError) throw updateError;
 
-    // res.status(200).json({ summary });
     return new Response(JSON.stringify({ summary }), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -56,6 +60,5 @@ export default async function handler(
       status: 400,
       headers: { "content-type": "application/json" },
     });
-    // res.status(400).end();
   }
 }
