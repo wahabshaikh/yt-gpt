@@ -1,13 +1,13 @@
-import { useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
-import { supabaseClient } from "~/lib/supabase";
 
 const Nav = () => {
-  const user = useUser();
   const router = useRouter();
+  const supabaseClient = useSupabaseClient();
+  const user = useUser();
 
   if (!user) return null;
 
