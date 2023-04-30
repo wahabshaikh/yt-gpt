@@ -27,7 +27,7 @@ export default function VideoPage({ video }: { video: Video }) {
 
   const [question, setQuestion] = useState("");
   const [history, setHistory] = useState<QnA[]>(
-    video.chapters.length !== 0
+    video.chapters && video.chapters.length !== 0
       ? video.summary
         ? [
             {
