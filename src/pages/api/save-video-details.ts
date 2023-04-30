@@ -21,10 +21,14 @@ export default async function handler(
 
     const transcript = await YoutubeTranscript.fetchTranscript(videoId);
 
+    const { title, thumbnails } = video;
+    const thumbnail = thumbnails[thumbnails.length - 1].url;
+
     const { error } = await supabaseClient.from("videos").insert({
       url: `https://youtu.be/${videoId}`,
       video_id: videoId,
-      title: video.title,
+      title,
+      thumbnail,
       transcript,
     });
 
