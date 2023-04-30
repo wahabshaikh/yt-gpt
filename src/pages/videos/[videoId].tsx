@@ -14,7 +14,9 @@ type Video = {
   video_id: string;
   url: string;
   title: string;
+  chapters: { title: string }[];
   transcript: { text: string; offset: number; duration: number }[];
+  summary: string;
 };
 
 type QnA = { question: string; answer: string };
@@ -23,8 +25,39 @@ export default function VideoPage({ video }: { video: Video }) {
   const supabaseClient = useSupabaseClient();
   const user = useUser();
 
-  const [question, setQuestion] = useState("Summarize");
-  const [history, setHistory] = useState<QnA[]>([]);
+  const [question, setQuestion] = useState("");
+  const [history, setHistory] = useState<QnA[]>(
+    video.chapters.length !== 0
+      ? video.summary
+        ? [
+            {
+              question: "Chapters",
+              answer: video.chapters
+                .map((chapter, index) => `${index + 1}: ${chapter.title}`)
+                .join("\n"),
+            },
+            {
+              question: "Summary",
+              answer: video.summary,
+            },
+          ]
+        : [
+            {
+              question: "Chapters",
+              answer: video.chapters
+                .map((chapter, index) => `${index + 1}: ${chapter.title}`)
+                .join("\n"),
+            },
+          ]
+      : video.summary
+      ? [
+          {
+            question: "Summary",
+            answer: video.summary,
+          },
+        ]
+      : []
+  );
   const [notes, setNotes] = useState<QnA[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +84,7 @@ export default function VideoPage({ video }: { video: Video }) {
       }
 
       if (!data || data.length === 0) {
-        toast.error("No notes found!");
+        // toast.error("No notes found!");
         return;
       }
 
@@ -118,56 +151,6 @@ export default function VideoPage({ video }: { video: Video }) {
     } catch (error: any) {
       console.error(error);
       toast.error(error.message);
-    }
-  };
-
-  const summarizeVideo = async () => {
-    if (!user) {
-      toast.error("Unauthenticated user... please login to continue!");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabaseClient
-        .from("videos")
-        .select("summary")
-        .eq("video_id", video.video_id)
-        .single();
-
-      if (error) {
-        toast.error("Something went wrong while fetching summary!");
-        throw error;
-      }
-
-      if (!data || !data.summary) {
-        const text = convertToText(video.transcript);
-
-        const response = await fetch("/api/summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId: video.video_id, text }),
-        });
-
-        if (!response.ok) {
-          toast.error("Something went wrong while summarizing the video!");
-          return;
-        }
-
-        const data = await response.json();
-
-        setHistory([...history, { question: "Summary", answer: data.summary }]);
-
-        return;
-      }
-
-      setHistory([...history, { question: "Summary", answer: data.summary }]);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setQuestion("");
-      setIsLoading(false);
     }
   };
 
@@ -298,15 +281,12 @@ export default function VideoPage({ video }: { video: Video }) {
             onSubmit={(e) => {
               e.preventDefault();
 
-              if (question) {
-                if (question === "Summarize") {
-                  summarizeVideo();
-                } else {
-                  fetchAnswer(question);
-                }
-              } else {
+              if (!question) {
                 toast.error("Please provide a question!");
+                return;
               }
+
+              fetchAnswer(question);
             }}
           >
             <div className="form-control">

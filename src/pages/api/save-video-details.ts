@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Client } from "youtubei";
-import { YoutubeTranscript } from "youtube-transcript";
+// import { YoutubeTranscript } from "youtube-transcript";
 import { supabaseClient } from "~/lib/supabase";
 
 const youtube = new Client();
@@ -30,7 +30,7 @@ export default async function handler(
         message: "Please enter a video no longer than 1 hour!",
       });
 
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+    // const transcript = await YoutubeTranscript.fetchTranscript(videoId);
 
     const { error } = await supabaseClient.from("videos").insert({
       url: `https://youtu.be/${videoId}`,
@@ -41,7 +41,7 @@ export default async function handler(
       upload_date: uploadDate,
       channel_id: channel.id,
       chapters,
-      transcript,
+      // transcript,
     });
 
     if (error) throw error;

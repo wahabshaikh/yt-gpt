@@ -76,7 +76,7 @@ const Card = ({ action, title, content, handleClick }: CardProps) => {
           </button>
         )}
       </div>
-      <p className="px-8 py-6">{content}</p>
+      <pre className="px-8 py-6 font-sans whitespace-pre-wrap">{content}</pre>
     </article>
   );
 };

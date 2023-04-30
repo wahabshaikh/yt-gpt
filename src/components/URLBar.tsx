@@ -4,6 +4,7 @@ import getYouTubeID from "get-youtube-id";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
+import { convertToText } from "~/utils";
 
 interface URLBarProps {
   initialUrl?: string;
@@ -37,7 +38,7 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
       // Check if video exists already
       const { data, error } = await supabaseClient
         .from("videos")
-        .select()
+        .select("transcript, summary")
         .eq("video_id", videoId);
 
       if (error) {
@@ -52,10 +53,69 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId }),
         });
-
         const data = await response.json();
 
         if (!response.ok) throw new Error(data.message);
+        toast.success(data.message);
+
+        const transcribeResponse = await fetch("/api/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId }),
+        });
+        const transcribeData = await transcribeResponse.json();
+
+        if (!transcribeResponse.ok) throw new Error(transcribeData.message);
+        toast.success(transcribeData.message);
+
+        const text = convertToText(transcribeData.transcript);
+        const summarizeResponse = await fetch("/api/summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId, text }),
+        });
+
+        if (!summarizeResponse.ok)
+          throw new Error("Something went wrong while summarizing the video!");
+        toast.success("Summarized the video successfully!");
+      }
+
+      // No transcription
+      if (!data[0].transcript) {
+        const transcribeResponse = await fetch("/api/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId }),
+        });
+        const transcribeData = await transcribeResponse.json();
+
+        if (!transcribeResponse.ok) throw new Error(transcribeData.message);
+        toast.success(transcribeData.message);
+
+        const text = convertToText(data[0].summary);
+        const summarizeResponse = await fetch("/api/summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId, text }),
+        });
+
+        if (!summarizeResponse.ok)
+          throw new Error("Something went wrong while summarizing the video!");
+        toast.success("Summarized the video successfully!");
+      }
+
+      // There is transcript, but no summary
+      if (data[0].transcript && !data[0].summary) {
+        const text = convertToText(data[0].transcript);
+        const summarizeResponse = await fetch("/api/summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId, text }),
+        });
+
+        if (!summarizeResponse.ok)
+          throw new Error("Something went wrong while summarizing the video!");
+        toast.success("Summarized the video successfully!");
       }
 
       // Check if history exists already
@@ -109,7 +169,7 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         <div className="input-group">
           <input
             type="url"
-            className="input input-bordered border-neutral w-full"
+            className="input input-bordered border-neutral border-r-0 w-full"
             placeholder="https://www.youtube.com/watch?v="
             value={url}
             onChange={(e) => setUrl(e.target.value)}
