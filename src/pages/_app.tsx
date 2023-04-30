@@ -5,7 +5,8 @@ import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import NextProgress from "next-progress";
 import { Toaster } from "react-hot-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -14,6 +15,21 @@ const inter = Inter({
 
 export default function App({ Component, pageProps }: AppProps) {
   const [supabaseClient] = useState(() => createBrowserSupabaseClient());
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      if (process.env.NODE_ENV === "production") {
+        window.gtag("config", process.env.NEXT_PUBLIC_GA_ID as string, {
+          page_path: url,
+        });
+      }
+    };
+    router.events.on("routeChangeComplete", handleRouteChange);
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
 
   return (
     <SessionContextProvider
