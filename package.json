@@ -35,5 +35,8 @@
     "typescript": "5.0.4",
     "youtube-transcript": "^1.0.5",
     "youtubei": "^1.1.2"
+  },
+  "devDependencies": {
+    "@types/gtag.js": "^0.0.12"
   }
 }

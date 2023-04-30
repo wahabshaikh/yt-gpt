@@ -80,6 +80,11 @@ dependencies:
     specifier: ^1.1.2
     version: 1.1.2
 
+devDependencies:
+  '@types/gtag.js':
+    specifier: ^0.0.12
+    version: 0.0.12
+
 packages:
 
   /@anthropic-ai/sdk@0.4.3:
@@ -438,6 +443,10 @@ packages:
     dependencies:
       tslib: 2.5.0
     dev: false
+
+  /@types/gtag.js@0.0.12:
+    resolution: {integrity: sha512-YQV9bUsemkzG81Ea295/nF/5GijnD2Af7QhEofh7xu+kvCN6RdodgNwwGWXB5GMI3NoyvQo0odNctoH/qLMIpg==}
+    dev: true
 
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
