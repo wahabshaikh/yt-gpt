@@ -56,10 +56,7 @@ export default function HistoryPage() {
         <h1 className="text-3xl font-bold">History</h1>
         <ul className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {videos.map((video) => (
-            <li
-              key={video.video_id}
-              // className="bg-neutral text-neutral-content p-4 rounded-md hover:bg-neutral-focus"
-            >
+            <li key={video.video_id}>
               <div className="card w-full md:h-64 lg:h-80 bg-base-100 shadow-xl image-full">
                 <figure className="relative">
                   <Image src={video.thumbnail} alt={video.title} fill />
@@ -79,23 +76,6 @@ export default function HistoryPage() {
                   </div>
                 </div>
               </div>
-              {/*               
-              <Link href={`/videos/${video.video_id}`}>
-                <div className="flex gap-4 items-center">
-                  <Image
-                    src={video.thumbnail}
-                    alt={video.title}
-                    height={120}
-                    width={120}
-                  />
-                  <div>
-                    <h3 className="font-bold">{video.title}</h3>
-                    <a href={video.url} target="_blank" className="link">
-                      See on YouTube
-                    </a>
-                  </div>
-                </div>
-              </Link> */}
             </li>
           ))}
         </ul>

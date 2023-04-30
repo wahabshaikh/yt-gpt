@@ -19,7 +19,7 @@ type Video = {
 
 type QnA = { question: string; answer: string };
 
-export default function Home({ video }: { video: Video }) {
+export default function VideoPage({ video }: { video: Video }) {
   const supabaseClient = useSupabaseClient();
   const user = useUser();
 

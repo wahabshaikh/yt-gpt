@@ -1,5 +1,4 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from "next";
 import { OpenAI } from "langchain/llms/openai";
 import { loadSummarizationChain } from "langchain/chains";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
@@ -10,17 +9,8 @@ export const config = {
   runtime: "edge",
 };
 
-export default async function handler(
-  // req: NextApiRequest,
-  // res: NextApiResponse
-  req: NextRequest
-) {
+export default async function handler(req: NextRequest) {
   try {
-    // const { videoId, text } = (await req.body) as {
-    //   videoId?: string;
-    //   text?: string;
-    // };
-
     const { videoId, text } = (await req.json()) as {
       videoId?: string;
       text?: string;
@@ -54,9 +44,9 @@ export default async function handler(
       status: 200,
       headers: { "content-type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return new Response("Something went wrong!", {
+    return new Response(error.messsage, {
       status: 400,
       headers: { "content-type": "application/json" },
     });
