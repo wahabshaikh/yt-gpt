@@ -16,7 +16,12 @@ const Login = () => {
       </Head>
 
       <Link href="/">
-        <Image src="/logo.svg" alt="YTJarvis" height={120} width={240} />
+        <Image
+          src="/logo-with-text.svg"
+          alt="YTJarvis"
+          height={120}
+          width={240}
+        />
       </Link>
 
       <div className="mt-12 w-full">

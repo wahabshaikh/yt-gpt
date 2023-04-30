@@ -3,6 +3,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import Login from "./Login";
 import Head from "next/head";
 import Nav from "./Nav";
+import Banner from "./Banner";
 
 interface LayoutProps {
   title?: string;
@@ -21,6 +22,8 @@ const Layout = ({ title, children }: LayoutProps) => {
       <Head>
         <title>{title ? `${title} | YTJarvis` : "YTJarvis"}</title>
       </Head>
+
+      <Banner />
 
       <Nav />
 
