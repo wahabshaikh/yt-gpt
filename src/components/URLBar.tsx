@@ -18,25 +18,34 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchVideo = async (url: string) => {
+    // Auth check
+    if (!user) {
+      toast.error("Unauthenticated user... please login to continue!");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      // Extract ID from URL
       const videoId = getYouTubeID(url, { fuzzy: false });
       if (!videoId) {
-        toast.error(`Invalid URL`);
+        toast.error("Invalid URL!");
         return;
       }
 
+      // Check if video exists already
       const { data, error } = await supabaseClient
         .from("videos")
         .select()
         .eq("video_id", videoId);
 
       if (error) {
-        toast.error(error.message);
-        return;
+        toast.error("Something went wrong while fetching videos!");
+        throw error;
       }
 
+      // If video does not exist, save video details
       if (!data || data.length === 0) {
         const response = await fetch("/api/save-video-details", {
           method: "POST",
@@ -49,31 +58,35 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         if (!response.ok) throw new Error(data.message);
       }
 
-      // For saving data
-      const { data: userData, error: userDataError } = await supabaseClient
-        .from("user_data")
+      // Check if history exists already
+      const { data: history, error: historyError } = await supabaseClient
+        .from("history")
         .select()
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .eq("video_id", videoId);
 
-      if (userDataError) {
-        toast.error(userDataError.message);
-        return;
+      if (historyError) {
+        toast.error("Something went wrong while fetching history!");
+        throw historyError;
       }
 
-      if (!userData || userData.length === 0) {
-        const { error } = await supabaseClient.from("user_data").insert({
-          user_id: user?.id,
+      // If history does not exist, save history
+      if (!history || history.length === 0) {
+        const { error } = await supabaseClient.from("history").insert({
+          user_id: user.id,
           video_id: videoId,
         });
 
-        if (error) throw error;
+        if (error) {
+          toast.error("Something went wrong while saving history!");
+          throw error;
+        }
       }
 
       router.push(`/videos/${videoId}`);
     } catch (error: any) {
-      toast.error(error.message);
       console.error(error);
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -84,11 +97,12 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
       onSubmit={(e) => {
         e.preventDefault();
 
-        if (url) {
-          fetchVideo(url);
-        } else {
+        if (!url) {
           toast.error("Please provide a url!");
+          return;
         }
+
+        fetchVideo(url);
       }}
     >
       <div className="form-control">

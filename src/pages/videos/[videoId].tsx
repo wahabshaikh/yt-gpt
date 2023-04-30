@@ -2,7 +2,7 @@ import { GetStaticPaths, GetStaticProps } from "next";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import YouTube from "react-youtube";
-import { User, useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import clsx from "clsx";
 import URLBar from "~/components/URLBar";
 import Card from "~/components/Card";
@@ -29,95 +29,126 @@ export default function VideoPage({ video }: { video: Video }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    fetchNotes(user);
+    fetchNotes();
   }, [user]);
 
-  const fetchNotes = async (user: User) => {
-    const { data, error } = await supabaseClient
-      .from("user_data")
-      .select("notes")
-      .eq("user_id", user.id)
-      .eq("video_id", video.video_id)
-      .single();
-
-    if (error) {
-      toast.error("Couldn't fetch notes");
+  const fetchNotes = async () => {
+    if (!user) {
+      toast.error("Unauthenticated user... please login to continue!");
       return;
     }
 
-    setNotes(data?.notes?.reverse() || []);
+    try {
+      const { data, error } = await supabaseClient
+        .from("notes")
+        .select("question, answer")
+        .eq("user_id", user.id)
+        .eq("video_id", video.video_id);
+
+      if (error) {
+        toast.error("Something went wrong while fetching notes!");
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        toast.error("No notes found!");
+        return;
+      }
+
+      setNotes(data.reverse());
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message);
+    }
   };
 
   const addToNotes = async (question: string, answer: string) => {
-    const updatedNotes = [...notes, { question, answer }];
-
-    const { error } = await supabaseClient
-      .from("user_data")
-      .update({ notes: updatedNotes })
-      .eq("user_id", user?.id)
-      .eq("video_id", video.video_id);
-
-    if (error) {
-      toast.error("Something went wrong while adding to your notes!");
+    if (!user) {
+      toast.error("Unauthenticated user... please login to continue!");
       return;
     }
 
-    setNotes(updatedNotes.reverse());
+    try {
+      const { error } = await supabaseClient
+        .from("notes")
+        .insert({ question, answer })
+        .eq("user_id", user.id)
+        .eq("video_id", video.video_id);
+
+      if (error) {
+        toast.error("Something went wrong while adding to your notes!");
+        throw error;
+      }
+
+      const updatedNotes = [...notes, { question, answer }];
+      setNotes(updatedNotes.reverse());
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message);
+    }
   };
 
-  const removeFromNotes = async (index: number) => {
-    const updatedNotes = [...notes];
-    updatedNotes.splice(index, 1);
-
-    const { error } = await supabaseClient
-      .from("user_data")
-      .update({ notes: updatedNotes })
-      .eq("user_id", user?.id)
-      .eq("video_id", video.video_id);
-
-    if (error) {
-      toast.error("Something went wrong while removing from your notes!");
+  const removeFromNotes = async (
+    index: number,
+    question: string,
+    answer: string
+  ) => {
+    if (!user) {
+      toast.error("Unauthenticated user... please login to continue!");
       return;
     }
 
-    setNotes(updatedNotes);
+    try {
+      const { error } = await supabaseClient
+        .from("notes")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("video_id", video.video_id)
+        .eq("question", question)
+        .eq("answer", answer);
+
+      if (error) {
+        toast.error("Something went wrong while deleting your note!");
+        throw error;
+      }
+
+      const updatedNotes = [...notes];
+      updatedNotes.splice(index, 1);
+      setNotes(updatedNotes.reverse());
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message);
+    }
   };
 
   const summarizeVideo = async () => {
+    if (!user) {
+      toast.error("Unauthenticated user... please login to continue!");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { data, error } = await supabaseClient
-        .from("user_data")
+        .from("videos")
         .select("summary")
-        .eq("user_id", user?.id)
         .eq("video_id", video.video_id)
         .single();
 
       if (error) {
-        toast.error("Error fetching summary");
-        return;
+        toast.error("Something went wrong while fetching summary!");
+        throw error;
       }
 
       if (!data || !data.summary) {
         const text = convertToText(video.transcript);
 
-        const response = await toast.promise(
-          fetch("/api/summarize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ videoId: video.video_id, text }),
-          }),
-          {
-            loading: "Summarizing the video...",
-            success: "Successfully summarized the video!",
-            error: "Something went wrong while summarizing the video!",
-          }
-        );
+        const response = await fetch("/api/summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: video.video_id, text }),
+        });
 
         if (!response.ok) {
           toast.error("Something went wrong while summarizing the video!");
@@ -126,10 +157,12 @@ export default function VideoPage({ video }: { video: Video }) {
 
         const data = await response.json();
 
-        setHistory([{ question: "Summary", answer: data.summary }]);
-      } else {
-        setHistory([{ question: "Summary", answer: data.summary }]);
+        setHistory([...history, { question: "Summary", answer: data.summary }]);
+
+        return;
       }
+
+      setHistory([...history, { question: "Summary", answer: data.summary }]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -139,6 +172,11 @@ export default function VideoPage({ video }: { video: Video }) {
   };
 
   const fetchAnswer = async (question: string) => {
+    if (!user) {
+      toast.error("Unauthenticated user... please login to continue!");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -158,20 +196,21 @@ export default function VideoPage({ video }: { video: Video }) {
 
       if (!response.ok) {
         toast.error(response.statusText);
-        throw new Error(response.statusText);
+        return;
       }
 
       const data = await response.json();
 
       if (!data || !data.answer) {
         toast.error("No answer in response!");
-        throw new Error("No answer in response!");
+        return;
       }
 
       const updatedHistory = [...history, { question, answer: data.answer }];
       setHistory(updatedHistory.reverse());
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      toast.error(error.message);
     } finally {
       setQuestion("");
       setIsLoading(false);
@@ -241,7 +280,9 @@ export default function VideoPage({ video }: { video: Video }) {
                   action="remove"
                   title={`Question: ${item.question}`}
                   content={item.answer}
-                  handleClick={() => removeFromNotes(index)}
+                  handleClick={() =>
+                    removeFromNotes(index, item.question, item.answer)
+                  }
                 />
               ))}
             </ul>

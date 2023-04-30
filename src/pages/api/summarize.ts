@@ -32,7 +32,7 @@ export default async function handler(req: NextRequest) {
     const summary = summarizeResponse.text;
 
     const { error: updateError } = await supabaseClient
-      .from("user_data")
+      .from("videos")
       .update({
         summary,
       })

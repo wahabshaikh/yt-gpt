@@ -1,53 +1,59 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { User, useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Layout from "~/components/Layout";
 import Link from "next/link";
 import Image from "next/image";
 
-type Video = {
+type History = {
   video_id: string;
   title: string;
   thumbnail: string;
   added_on: string;
-};
+}[];
 
 export default function HistoryPage() {
   const supabaseClient = useSupabaseClient();
   const user = useUser();
 
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [history, setHistory] = useState<History>([]);
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    fetchVideos(user);
+    fetchHistory();
   }, [user]);
 
-  const fetchVideos = async (user: User) => {
-    const { data, error } = await supabaseClient
-      .from("user_data")
-      .select("created_at, videos (video_id, title, thumbnail)")
-      .eq("user_id", user.id);
+  const fetchHistory = async () => {
+    if (!user) {
+      toast.error("Unauthenticated user... please login to continue!");
+      return;
+    }
 
-    if (error) {
+    try {
+      const { data, error } = await supabaseClient
+        .from("history")
+        .select("created_at, videos (video_id, title, thumbnail)")
+        .eq("user_id", user.id);
+
+      if (error) {
+        toast.error("Something went wrong while fetching history!");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        toast.error("No history found!");
+        return;
+      }
+
+      const history = data.map((item) => ({
+        ...item.videos,
+        added_on: item.created_at,
+      })) as unknown as History;
+
+      setHistory(history);
+    } catch (error: any) {
+      console.error(error);
       toast.error(error.message);
-      return;
     }
-
-    if (!data || data.length === 0) {
-      toast.error(`No data found!`);
-      return;
-    }
-
-    const videos = data.map((item) => ({
-      ...item.videos,
-      added_on: item.created_at,
-    })) as unknown as Video[];
-
-    setVideos(videos);
   };
 
   return (
@@ -55,7 +61,7 @@ export default function HistoryPage() {
       <main className="mx-auto max-w-7xl px-4 py-12 w-full">
         <h1 className="text-3xl font-bold">History</h1>
         <ul className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {videos.map((video) => (
+          {history.map((video) => (
             <li key={video.video_id}>
               <div className="card w-full md:h-64 lg:h-80 bg-base-100 shadow-xl image-full">
                 <figure className="relative">
