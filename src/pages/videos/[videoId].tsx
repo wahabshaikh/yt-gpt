@@ -102,20 +102,41 @@ export default function VideoPage({ video }: { video: Video }) {
     }
 
     try {
-      const { error } = await supabaseClient.from("notes").insert({
-        question,
-        answer,
-        user_id: user.id,
-        video_id: video.video_id,
-      });
+      const { data, error } = await supabaseClient
+        .from("notes")
+        .select()
+        .eq("user_id", user.id)
+        .eq("video_id", video.video_id)
+        .eq("question", question)
+        .eq("answer", answer);
 
       if (error) {
-        toast.error("Something went wrong while adding to your notes!");
+        toast.error("Something went wrong while fetching your note!");
         throw error;
       }
 
-      const updatedNotes = [...notes, { question, answer }];
-      setNotes(updatedNotes.reverse());
+      if (!data || data.length === 0) {
+        const { error } = await supabaseClient.from("notes").insert({
+          question,
+          answer,
+          user_id: user.id,
+          video_id: video.video_id,
+        });
+
+        if (error) {
+          toast.error("Something went wrong while adding to your notes!");
+          throw error;
+        }
+
+        toast.success("Note saved successfully!");
+
+        const updatedNotes = [...notes, { question, answer }];
+        setNotes(updatedNotes.reverse());
+
+        return;
+      }
+
+      toast.error("Note already saved!");
     } catch (error: any) {
       console.error(error);
       toast.error(error.message);
@@ -146,9 +167,17 @@ export default function VideoPage({ video }: { video: Video }) {
         throw error;
       }
 
+      toast.success("Note removed successfully!");
+
       const updatedNotes = [...notes];
       updatedNotes.splice(index, 1);
       setNotes(updatedNotes.reverse());
+
+      if (question === "Summary" || question === "Chapters") {
+        return;
+      }
+
+      setHistory([{ question, answer }, ...history]);
     } catch (error: any) {
       console.error(error);
       toast.error(error.message);
