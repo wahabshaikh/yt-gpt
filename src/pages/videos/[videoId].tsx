@@ -102,11 +102,12 @@ export default function VideoPage({ video }: { video: Video }) {
     }
 
     try {
-      const { error } = await supabaseClient
-        .from("notes")
-        .insert({ question, answer })
-        .eq("user_id", user.id)
-        .eq("video_id", video.video_id);
+      const { error } = await supabaseClient.from("notes").insert({
+        question,
+        answer,
+        user_id: user.id,
+        video_id: video.video_id,
+      });
 
       if (error) {
         toast.error("Something went wrong while adding to your notes!");
