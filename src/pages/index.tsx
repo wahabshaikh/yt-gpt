@@ -3,39 +3,17 @@ import Link from "next/link";
 import URLBar from "~/components/URLBar";
 import Layout from "~/components/Layout";
 
-export default function Home() {
-  // const [recentVideos, setRecentVideos] = useState<
-  //   { video_id: string; title: string; thumbnail: string; url: string }[]
-  // >([]);
-
-  // useEffect(() => {
-  //   fetchRecentVideos();
-  // }, []);
-
-  // const fetchRecentVideos = async () => {
-  //   const { data, error } = await supabaseClient
-  //     .from("videos")
-  //     .select("video_id, title, thumbnail, url")
-  //     .limit(5);
-
-  //   if (error) {
-  //     toast.error(error.message);
-  //     return;
-  //   }
-
-  //   if (!data || !data.length) {
-  //     toast.error(`No videos found!`);
-  //     return;
-  //   }
-
-  //   setRecentVideos(data);
-  // };
-
+export default function HomePage() {
   return (
     <Layout>
       <main className="mx-auto max-w-3xl px-4 py-12 flex flex-col items-center justify-center flex-1">
         <Link href="/">
-          <Image src="/logo.svg" alt="YTJarvis" height={120} width={240} />
+          <Image
+            src="/logo-with-text.svg"
+            alt="YTJarvis"
+            height={120}
+            width={240}
+          />
         </Link>
 
         <p className="mt-4 text-center">

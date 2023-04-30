@@ -12,11 +12,16 @@ const Nav = () => {
   if (!user) return null;
 
   return (
-    <nav className="navbar bg-base-100">
+    <nav className="navbar bg-base-100 max-w-7xl px-4 mx-auto">
       <div className="flex-1">
         {router.pathname !== "/" ? (
-          <Link href="/" className="btn btn-ghost">
-            <Image src="/logo.svg" alt="YTJarvis" height={40} width={120} />
+          <Link href="/">
+            <Image
+              src="/logo-with-text.svg"
+              alt="YTJarvis"
+              height={40}
+              width={120}
+            />
           </Link>
         ) : null}
       </div>
@@ -35,6 +40,9 @@ const Nav = () => {
           tabIndex={0}
           className="mt-3 p-2 shadow menu menu-compact dropdown-content bg-base-100 rounded-box w-52"
         >
+          <li>
+            <Link href="/history">History</Link>
+          </li>
           <li>
             <button onClick={() => supabaseClient.auth.signOut()}>
               Logout
