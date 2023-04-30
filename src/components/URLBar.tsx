@@ -80,43 +80,43 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         toast.success("Summarized the video successfully!");
       }
 
-      // No transcription
-      if (!data[0].transcript) {
-        const transcribeResponse = await fetch("/api/transcribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId }),
-        });
-        const transcribeData = await transcribeResponse.json();
+      // // No transcription
+      // if (!data[0].transcript) {
+      //   const transcribeResponse = await fetch("/api/transcribe", {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({ videoId }),
+      //   });
+      //   const transcribeData = await transcribeResponse.json();
 
-        if (!transcribeResponse.ok) throw new Error(transcribeData.message);
-        toast.success(transcribeData.message);
+      //   if (!transcribeResponse.ok) throw new Error(transcribeData.message);
+      //   toast.success(transcribeData.message);
 
-        const text = convertToText(data[0].summary);
-        const summarizeResponse = await fetch("/api/summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId, text }),
-        });
+      //   const text = convertToText(data[0].summary);
+      //   const summarizeResponse = await fetch("/api/summarize", {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({ videoId, text }),
+      //   });
 
-        if (!summarizeResponse.ok)
-          throw new Error("Something went wrong while summarizing the video!");
-        toast.success("Summarized the video successfully!");
-      }
+      //   if (!summarizeResponse.ok)
+      //     throw new Error("Something went wrong while summarizing the video!");
+      //   toast.success("Summarized the video successfully!");
+      // }
 
-      // There is transcript, but no summary
-      if (data[0].transcript && !data[0].summary) {
-        const text = convertToText(data[0].transcript);
-        const summarizeResponse = await fetch("/api/summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId, text }),
-        });
+      // // There is transcript, but no summary
+      // if (data[0].transcript && !data[0].summary) {
+      //   const text = convertToText(data[0].transcript);
+      //   const summarizeResponse = await fetch("/api/summarize", {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({ videoId, text }),
+      //   });
 
-        if (!summarizeResponse.ok)
-          throw new Error("Something went wrong while summarizing the video!");
-        toast.success("Summarized the video successfully!");
-      }
+      //   if (!summarizeResponse.ok)
+      //     throw new Error("Something went wrong while summarizing the video!");
+      //   toast.success("Summarized the video successfully!");
+      // }
 
       // Check if history exists already
       const { data: history, error: historyError } = await supabaseClient
