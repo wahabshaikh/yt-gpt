@@ -9,19 +9,15 @@ import Card from "~/components/Card";
 import Layout from "~/components/Layout";
 import { supabaseClient } from "~/lib/supabase";
 import { convertToText } from "~/utils";
-
-type Video = {
-  video_id: string;
-  url: string;
-  title: string;
-  chapters: { title: string }[];
-  transcript: { text: string; offset: number; duration: number }[];
-  summary: string;
-};
+import { Transcript, Video } from "youtubei";
 
 type QnA = { question: string; answer: string };
 
-export default function VideoPage({ video }: { video: Video }) {
+export default function VideoPage({
+  video,
+}: {
+  video: Video & { transcript: Transcript[]; summary: string };
+}) {
   const supabaseClient = useSupabaseClient();
   const user = useUser();
 
@@ -73,10 +69,10 @@ export default function VideoPage({ video }: { video: Video }) {
 
     try {
       const { data, error } = await supabaseClient
-        .from("notes")
+        .from("video_notes")
         .select("question, answer")
-        .eq("user_id", user.id)
-        .eq("video_id", video.video_id);
+        .eq("userId", user.id)
+        .eq("videoId", video.id);
 
       if (error) {
         toast.error("Something went wrong while fetching notes!");
@@ -84,7 +80,6 @@ export default function VideoPage({ video }: { video: Video }) {
       }
 
       if (!data || data.length === 0) {
-        // toast.error("No notes found!");
         return;
       }
 
@@ -103,10 +98,10 @@ export default function VideoPage({ video }: { video: Video }) {
 
     try {
       const { data, error } = await supabaseClient
-        .from("notes")
+        .from("video_notes")
         .select()
-        .eq("user_id", user.id)
-        .eq("video_id", video.video_id)
+        .eq("userId", user.id)
+        .eq("videoId", video.id)
         .eq("question", question)
         .eq("answer", answer);
 
@@ -116,11 +111,11 @@ export default function VideoPage({ video }: { video: Video }) {
       }
 
       if (!data || data.length === 0) {
-        const { error } = await supabaseClient.from("notes").insert({
+        const { error } = await supabaseClient.from("video_notes").insert({
           question,
           answer,
-          user_id: user.id,
-          video_id: video.video_id,
+          userId: user.id,
+          videoId: video.id,
         });
 
         if (error) {
@@ -132,14 +127,12 @@ export default function VideoPage({ video }: { video: Video }) {
 
         const updatedNotes = [...notes, { question, answer }];
         setNotes(updatedNotes.reverse());
-
-        return;
+      } else {
+        toast.error("Note already saved!");
       }
-
-      toast.error("Note already saved!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message);
+      toast.error((error as Error).message);
     }
   };
 
@@ -155,10 +148,10 @@ export default function VideoPage({ video }: { video: Video }) {
 
     try {
       const { error } = await supabaseClient
-        .from("notes")
+        .from("video_notes")
         .delete()
-        .eq("user_id", user.id)
-        .eq("video_id", video.video_id)
+        .eq("userId", user.id)
+        .eq("videoId", video.id)
         .eq("question", question)
         .eq("answer", answer);
 
@@ -203,7 +196,7 @@ export default function VideoPage({ video }: { video: Video }) {
         body: JSON.stringify({
           question,
           text,
-          videoId: video.video_id,
+          videoId: video.id,
         }),
       });
 
@@ -240,7 +233,7 @@ export default function VideoPage({ video }: { video: Video }) {
           {/* YouTube Embed */}
           <div className="mt-8 rounded-md overflow-hidden">
             <YouTube
-              videoId={video.video_id}
+              videoId={video.id}
               opts={{
                 height: "320",
                 width: "100%",
@@ -303,7 +296,7 @@ export default function VideoPage({ video }: { video: Video }) {
         </div>
 
         <div className=" flex flex-col">
-          <URLBar initialUrl={video.url} />
+          <URLBar initialUrl={`https://youtu.be/${video.id}`} />
 
           <div className="divider uppercase">Ask your question below</div>
 
@@ -376,7 +369,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const { data: video, error } = await supabaseClient
     .from("videos")
     .select("*")
-    .eq("video_id", videoId)
+    .eq("id", videoId)
     .single();
 
   if (error) throw error;
@@ -398,7 +391,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 export const getStaticPaths: GetStaticPaths = async () => {
   const { data: videos, error } = await supabaseClient
     .from("videos")
-    .select("video_id");
+    .select("id");
 
   if (error) throw error;
 
@@ -406,7 +399,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   // Get the paths we want to pre-render based on videos
   const paths = videos.map((video) => ({
-    params: { videoId: video.video_id },
+    params: { videoId: video.id },
   }));
 
   // We'll pre-render only these paths at build time.

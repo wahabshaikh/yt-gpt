@@ -1,3 +1,5 @@
+import { Transcript } from "youtubei";
+
 export const extractTextFromTranscription = (transcription: string) => {
   return transcription
     .split("\n")
@@ -10,13 +12,7 @@ export const extractTextFromTranscription = (transcription: string) => {
     .join(" ");
 };
 
-export const convertToText = (
-  transcript: {
-    text: string;
-    offset: number;
-    duration: number;
-  }[]
-) => {
+export const convertToText = (transcript: Transcript[]) => {
   let text = "";
 
   for (let i = 0; i < transcript.length; i++) {

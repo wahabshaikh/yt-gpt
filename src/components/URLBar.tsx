@@ -31,18 +31,18 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
       // Extract ID from URL
       const videoId = getYouTubeID(url, { fuzzy: false });
       if (!videoId) {
-        toast.error("Invalid URL!");
-        return;
+        throw new Error(
+          "The URL entered is invalid. Please make sure to enter a valid YouTube video URL."
+        );
       }
 
       // Check if video exists already
       const { data, error } = await supabaseClient
         .from("videos")
         .select("transcript, summary")
-        .eq("video_id", videoId);
+        .eq("id", videoId);
 
       if (error) {
-        toast.error("Something went wrong while fetching videos!");
         throw error;
       }
 
@@ -53,22 +53,34 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId }),
         });
+
         const data = await response.json();
 
-        if (!response.ok) throw new Error(data.message);
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+
         toast.success(data.message);
 
-        const transcribeResponse = await fetch("/api/transcribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId }),
-        });
-        const transcribeData = await transcribeResponse.json();
+        const text = convertToText(data.transcript);
+        await toast.promise(
+          fetch("/api/summarize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId, text }),
+          }),
+          {
+            loading: "Generating video summary...",
+            success:
+              "Your requested video summary has been saved successfully.",
+            error: (error) => error.message,
+          }
+        );
+      }
 
-        if (!transcribeResponse.ok) throw new Error(transcribeData.message);
-        toast.success(transcribeData.message);
-
-        const text = convertToText(transcribeData.transcript);
+      // Video exists, but no summary
+      if (data && data.length !== 0 && !data[0].summary) {
+        const text = convertToText(data[0].transcript);
         const summarizeResponse = await fetch("/api/summarize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -80,65 +92,25 @@ const URLBar = ({ initialUrl }: URLBarProps) => {
         toast.success("Summarized the video successfully!");
       }
 
-      // // No transcription
-      // if (!data[0].transcript) {
-      //   const transcribeResponse = await fetch("/api/transcribe", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({ videoId }),
-      //   });
-      //   const transcribeData = await transcribeResponse.json();
-
-      //   if (!transcribeResponse.ok) throw new Error(transcribeData.message);
-      //   toast.success(transcribeData.message);
-
-      //   const text = convertToText(data[0].summary);
-      //   const summarizeResponse = await fetch("/api/summarize", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({ videoId, text }),
-      //   });
-
-      //   if (!summarizeResponse.ok)
-      //     throw new Error("Something went wrong while summarizing the video!");
-      //   toast.success("Summarized the video successfully!");
-      // }
-
-      // // There is transcript, but no summary
-      // if (data[0].transcript && !data[0].summary) {
-      //   const text = convertToText(data[0].transcript);
-      //   const summarizeResponse = await fetch("/api/summarize", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({ videoId, text }),
-      //   });
-
-      //   if (!summarizeResponse.ok)
-      //     throw new Error("Something went wrong while summarizing the video!");
-      //   toast.success("Summarized the video successfully!");
-      // }
-
       // Check if history exists already
       const { data: history, error: historyError } = await supabaseClient
-        .from("history")
+        .from("user_videos")
         .select()
-        .eq("user_id", user.id)
-        .eq("video_id", videoId);
+        .eq("userId", user.id)
+        .eq("videoId", videoId);
 
       if (historyError) {
-        toast.error("Something went wrong while fetching history!");
         throw historyError;
       }
 
-      // If history does not exist, save history
+      // If user video history does not exist, save user video history
       if (!history || history.length === 0) {
-        const { error } = await supabaseClient.from("history").insert({
-          user_id: user.id,
-          video_id: videoId,
+        const { error } = await supabaseClient.from("user_videos").insert({
+          userId: user.id,
+          videoId: videoId,
         });
 
         if (error) {
-          toast.error("Something went wrong while saving history!");
           throw error;
         }
       }

@@ -4,11 +4,12 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Layout from "~/components/Layout";
 import Link from "next/link";
 import Image from "next/image";
+import { Thumbnails, Video } from "youtubei";
 
 type History = {
-  video_id: string;
+  id: string;
   title: string;
-  thumbnail: string;
+  thumbnails: Thumbnails;
   added_on: string;
 }[];
 
@@ -30,9 +31,9 @@ export default function HistoryPage() {
 
     try {
       const { data, error } = await supabaseClient
-        .from("history")
-        .select("created_at, videos (video_id, title, thumbnail)")
-        .eq("user_id", user.id);
+        .from("user_videos")
+        .select("created_at, videos (id, title, thumbnails)")
+        .eq("userId", user.id);
 
       if (error) {
         toast.error("Something went wrong while fetching history!");
@@ -40,7 +41,7 @@ export default function HistoryPage() {
       }
 
       if (!data || data.length === 0) {
-        toast.error("No history found!");
+        // toast.error("No history found!");
         return;
       }
 
@@ -62,10 +63,14 @@ export default function HistoryPage() {
         <h1 className="text-3xl font-bold">History</h1>
         <ul className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {history.map((video) => (
-            <li key={video.video_id}>
+            <li key={video.id}>
               <div className="card w-full md:h-64 lg:h-80 bg-base-100 shadow-xl image-full">
                 <figure className="relative">
-                  <Image src={video.thumbnail} alt={video.title} fill />
+                  <Image
+                    src={video.thumbnails[video.thumbnails.length - 1].url}
+                    alt={video.title}
+                    fill
+                  />
                 </figure>
                 <div className="card-body">
                   <h2 className="card-title">{video.title}</h2>
@@ -74,7 +79,7 @@ export default function HistoryPage() {
                   </p>
                   <div className="card-actions justify-end">
                     <Link
-                      href={`videos/${video.video_id}`}
+                      href={`videos/${video.id}`}
                       className="btn btn-primary"
                     >
                       See notes

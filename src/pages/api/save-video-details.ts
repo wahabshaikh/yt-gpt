@@ -1,54 +1,88 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Client } from "youtubei";
-// import { YoutubeTranscript } from "youtube-transcript";
+import { Client, Video } from "youtubei";
 import { supabaseClient } from "~/lib/supabase";
 
 const youtube = new Client();
 
-export default async function handler(
+export default async function saveVideoDetails(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
-    const { videoId } = (await req.body) as {
-      videoId?: string;
-    };
-    if (!videoId) throw new Error("No videoId found in req.body!");
+    const { videoId } = req.body as { videoId?: string };
+    if (!videoId) {
+      throw new Error(
+        "We require a video ID to perform this action. Please provide a valid video ID and try again."
+      );
+    }
 
     const video = await youtube.getVideo(videoId);
-    if (!video) throw new Error("No video details found!");
+    if (!video) {
+      throw new Error(
+        "Sorry, we could not find any details for the requested video. Please ensure that the video ID is correct and try again."
+      );
+    }
 
-    const { title, thumbnails, channel, uploadDate } = video;
-    const thumbnail = thumbnails[thumbnails.length - 1].url;
-    const duration = (video as any).duration || 0;
-    const chapters = (video as any).chapters || [];
+    if (video.isLiveContent) {
+      throw new Error(
+        "Sorry, but the video you're trying to access is currently not supported as it is a live video stream. Please try again with a different video that is not a live stream."
+      );
+    }
+
+    const {
+      id,
+      title,
+      thumbnails,
+      description,
+      duration,
+      uploadDate,
+      chapters,
+      tags,
+      isLiveContent,
+      channel,
+    } = video as Video;
 
     // Duration check
-    if (duration >= 3600)
-      return res.status(400).json({
-        message: "Please enter a video no longer than 1 hour!",
-      });
+    if (duration >= 3600) {
+      throw new Error(
+        "Please make sure to enter a video with a duration less than 1 hour. Videos with a duration longer than 1 hour are currently not supported."
+      );
+    }
 
-    // const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+    const transcript = await youtube.getVideoTranscript(videoId);
+
+    if (!transcript) {
+      throw new Error(
+        "Sorry, it looks like we are currently unable to support this video as it has no transcript available. Please make sure to enter a video URL with CC enabled."
+      );
+    }
 
     const { error } = await supabaseClient.from("videos").insert({
-      url: `https://youtu.be/${videoId}`,
-      video_id: videoId,
+      id,
       title,
-      thumbnail,
+      thumbnails,
+      description,
       duration,
-      upload_date: uploadDate,
-      channel_id: channel.id,
+      uploadDate,
       chapters,
-      // transcript,
+      tags,
+      isLiveContent,
+      channelId: channel.id,
+      transcript,
+      updated_at: new Date().toISOString(),
     });
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    res.status(200).json({ message: "Saved video details successfully!" });
-  } catch (error: any) {
+    res.status(200).json({
+      message: "Your requested video details have been saved successfully.",
+      transcript,
+    });
+  } catch (error: unknown) {
     console.error(error);
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: (error as Error).message });
   }
 }

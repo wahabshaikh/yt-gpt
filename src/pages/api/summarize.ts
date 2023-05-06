@@ -15,8 +15,16 @@ export default async function handler(req: NextRequest) {
       videoId?: string;
       text?: string;
     };
-    if (!videoId) throw new Error("No videoId found in req.body");
-    if (!text) throw new Error("No text found in req.body");
+    if (!videoId) {
+      throw new Error(
+        "We require a video ID to perform this action. Please provide a valid video ID and try again."
+      );
+    }
+    if (!text) {
+      throw new Error(
+        "We require the transcript text to perform this action. Please provide a valid transcript text and try again."
+      );
+    }
 
     const model = new OpenAI({ temperature: 0 });
     const textSplitter = new RecursiveCharacterTextSplitter({
@@ -31,23 +39,24 @@ export default async function handler(req: NextRequest) {
     });
     const summary = summarizeResponse.text;
 
-    const { error: updateError } = await supabaseClient
+    const { error } = await supabaseClient
       .from("videos")
       .update({
         summary,
+        updated_at: new Date().toISOString(),
       })
-      .eq("video_id", videoId);
+      .eq("id", videoId);
 
-    if (updateError) throw updateError;
+    if (error) throw error;
 
     return new Response(JSON.stringify({ summary }), {
       status: 200,
       headers: { "content-type": "application/json" },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return new Response(error.messsage, {
-      status: 400,
+    return new Response((error as Error).message, {
+      status: 500,
       headers: { "content-type": "application/json" },
     });
   }
